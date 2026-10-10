@@ -6,7 +6,7 @@ The **Board Game Scoreboard** is an interactive electronic scoreboard for board 
 
 ## Demo
 
-There's no public deployment, because the project is meant to run entirely on the group's own machine, without relying on the internet. To try it out, just clone the repository, go into the `desafio2` folder, and bring everything up with `docker compose up`: in a few seconds the frontend is available at `http://localhost:8080` and the local AI service responds at `http://localhost:11434`. From there, just follow the six steps right in the interface, in English. _(Placeholder for a short video demonstrating a game night end to end.)_
+There's no public deployment, because the project is meant to run entirely on the group's own machine, without relying on the internet. To try it out, just clone the repository, go into the `touch_grass` folder, and bring everything up with `docker compose up`: in a few seconds the frontend is available at `http://localhost:8080` and the local AI service responds at `http://localhost:11434`. From there, just follow the six steps right in the interface, in English. _(Placeholder for a short video demonstrating a game night end to end.)_
 
 ## Code
 

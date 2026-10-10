@@ -19,3 +19,5 @@ The core piece that makes the project work is an open-source AI: a lightweight o
 ## Why Does Open Innovation Matter?
 
 The open-source approach works best here precisely because game night happens at someone's living room table, often without reliable internet. With an open-weight model running locally via Ollama, the app keeps working offline, without depending on any external API. The session data — player names, games, and scores — stays in the browser's `localStorage` and in the calls to the local service, remaining on the user's machine instead of traveling to third-party servers, which preserves the group's privacy. And since there's no closed API in the way, there's no per-request cost or usage limits: anyone can spin up the project and use it freely. A closed API wouldn't make this possible without a permanent connection, without cost, and without giving up data privacy.
+
+![alt text](image.png)
