@@ -1,0 +1,69 @@
+# docker-compose do Board Game Scoreboard (Requisito 9).
+#
+# Decisão de arquitetura (ver design.md, seção Architecture):
+#   - A aplicação é um frontend puro que roda inteiramente no navegador.
+#   - O navegador chama o serviço de IA DIRETAMENTE em http://localhost:11434,
+#     por isso a porta 11434 do Ollama é publicada no host (11434:11434), sem
+#     proxy reverso. Essa é a abordagem mais simples e evita manter um proxy.
+#   - Como o cliente é o navegador (origem http://localhost:8080) e não outro
+#     container, a chamada para http://localhost:11434 é CROSS-ORIGIN. O Ollama
+#     precisa autorizar essa origem via a variável de ambiente OLLAMA_ORIGINS
+#     (abaixo). Sem ela, o navegador bloquearia a requisição por CORS.
+#
+# Exatamente dois serviços são definidos (R9.2): frontend e ollama.
+
+services:
+  # Serviço do frontend: imagem construída a partir do Dockerfile local, que
+  # usa nginx:alpine para servir os arquivos estáticos (index.html, CSS e JS).
+  # Publica a porta 8080 do host apontando para a porta 80 do nginx (R9.1, R9.3).
+  frontend:
+    build:
+      context: .
+    ports:
+      # Fixar o host IP (127.0.0.1) evita o bug "invalid IP" do Compose v2 no
+      # WSL/containerd, em que a forma curta "8080:80" gera um bind inválido.
+      - "127.0.0.1:8080:80"
+    # O frontend não depende do Ollama para subir: a aplicação degrada
+    # graciosamente para uma sequência local se a IA estiver indisponível (R9.5).
+
+  # Suggestion_Service: Ollama rodando um modelo open-weight leve (ex.: llama3.2).
+  # A porta 11434 é publicada no host para que o navegador a alcance diretamente
+  # em http://localhost:11434/api/generate (R9.4 / decisão de arquitetura).
+  ollama:
+    image: ollama/ollama
+    ports:
+      # Mesmo motivo do frontend: fixar o host IP evita o bind inválido.
+      - "127.0.0.1:11434:11434"
+    environment:
+      # Autoriza a origem do frontend a fazer requisições cross-origin ao Ollama.
+      # "*" cobre o uso local; em um ambiente mais restrito, troque pela origem
+      # específica do frontend (ex.: http://localhost:8080).
+      - OLLAMA_ORIGINS=*
+      # Modelo open-weight leve usado pela sugestão (deve bater com OLLAMA_MODELO
+      # em src/js/suggestion.js). Configurável sem editar o entrypoint.
+      - OLLAMA_MODEL=llama3.2
+    volumes:
+      # Volume nomeado para persistir os modelos baixados entre reinícios.
+      - ollama_data:/root/.ollama
+    # Entrypoint customizado: sobe o servidor Ollama em segundo plano, aguarda a
+    # API responder, garante que o modelo esteja baixado (idempotente — o volume
+    # ollama_data mantém o modelo em cache entre reinícios) e então mantém o
+    # servidor em primeiro plano. Assim, `docker compose up` deixa a sugestão por
+    # IA pronta para uso, sem passo manual de `ollama pull`.
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        ollama serve &
+        pid=$$!
+        echo "Aguardando o servidor Ollama responder..."
+        until ollama list >/dev/null 2>&1; do
+          sleep 1
+        done
+        echo "Garantindo o modelo $$OLLAMA_MODEL..."
+        ollama pull "$$OLLAMA_MODEL" || echo "Falha ao baixar o modelo; a app usará o fallback local."
+        wait $$pid
+
+# Volume nomeado usado pelo serviço ollama para guardar os modelos.
+volumes:
+  ollama_data:

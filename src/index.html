@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Night Scoreboard</title>
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <header class="cabecalho">
+      <h1>Game Night Scoreboard</h1>
+      <p class="cabecalho__subtitulo">
+        Set up the session, track the points, and let the game happen at the table.
+      </p>
+    </header>
+
+    <!--
+      Área de notificações usada por ui.exibirMensagem (#area-notificacoes).
+      Fica fora de <main id="app"> para persistir entre as etapas.
+    -->
+    <div
+      id="area-notificacoes"
+      class="area-notificacoes"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <!--
+      Contêiner principal das seis etapas sequenciais (R10.2). O módulo flow.js
+      exibe uma seção [data-etapa] por vez; main.js liga os controles abaixo.
+    -->
+    <main id="app">
+      <!-- ETAPA 1: Seleção de jogos (R1, R2) -->
+      <section
+        class="etapa etapa--jogos"
+        data-etapa="jogos"
+        aria-labelledby="titulo-etapa-jogos"
+      >
+        <h2 id="titulo-etapa-jogos">1. Which games do you have?</h2>
+        <p class="etapa__descricao">
+          Check off the games your group owns in the catalog and add any that
+          aren't on the list.
+        </p>
+
+        <!-- Catálogo: controle de marcação de dois estados por jogo (R1.1) -->
+        <fieldset class="catalogo">
+          <legend>Game catalog</legend>
+          <ul id="lista-catalogo" class="catalogo__lista">
+            <!-- Preenchido dinamicamente com um checkbox por jogo (R1.1). -->
+          </ul>
+        </fieldset>
+
+        <!-- Jogo personalizado: input de texto + botão adicionar (R2.1) -->
+        <form id="form-jogo-personalizado" class="form-inline">
+          <label for="input-jogo-personalizado">Add a custom game</label>
+          <input
+            type="text"
+            id="input-jogo-personalizado"
+            name="jogo-personalizado"
+            maxlength="60"
+            autocomplete="off"
+            placeholder="Game name (1 to 60 characters)"
+          />
+          <button type="submit" id="btn-adicionar-jogo">Add game</button>
+        </form>
+
+        <!-- Lista dos jogos selecionados (catálogo marcado + personalizados). -->
+        <h3>Selected games</h3>
+        <ul id="lista-jogos-selecionados" class="lista-selecionados">
+          <!-- Preenchido dinamicamente; cada item com botão de remover. -->
+        </ul>
+      </section>
+
+      <!-- ETAPA 2: Cadastro de jogadores (R3) -->
+      <section
+        class="etapa etapa--jogadores"
+        data-etapa="jogadores"
+        hidden
+        aria-labelledby="titulo-etapa-jogadores"
+      >
+        <h2 id="titulo-etapa-jogadores">2. Who's playing?</h2>
+        <p class="etapa__descricao">
+          Add 4 to 20 players to continue.
+        </p>
+
+        <!-- Input de nome de jogador + botão adicionar -->
+        <form id="form-jogador" class="form-inline">
+          <label for="input-jogador">Player name</label>
+          <input
+            type="text"
+            id="input-jogador"
+            name="jogador"
+            maxlength="40"
+            autocomplete="off"
+            placeholder="Player name (1 to 40 characters)"
+          />
+          <button type="submit" id="btn-adicionar-jogador">
+            Add player
+          </button>
+        </form>
+
+        <!-- Lista de jogadores cadastrados -->
+        <h3>Registered players</h3>
+        <ul id="lista-jogadores" class="lista-jogadores">
+          <!-- Preenchido dinamicamente; cada item com botão de remover. -->
+        </ul>
+      </section>
+
+      <!-- ETAPA 3: Configuração de pontuação por jogo (R4) -->
+      <section
+        class="etapa etapa--pontuacao"
+        data-etapa="pontuacao"
+        hidden
+        aria-labelledby="titulo-etapa-pontuacao"
+      >
+        <h2 id="titulo-etapa-pontuacao">3. How much is each game worth?</h2>
+        <p class="etapa__descricao">
+          Set the point value for each selected game (a whole number from 1 to
+          1000). The default is 1 point.
+        </p>
+
+        <!--
+          Área com um input numérico de Valor_Pontuacao por jogo selecionado
+          (R4.1). Preenchida dinamicamente a partir dos Jogos_Selecionados.
+        -->
+        <ul id="lista-pontuacao" class="lista-pontuacao">
+          <!-- Cada item: rótulo do jogo + input number (min=1, max=1000). -->
+        </ul>
+      </section>
+
+      <!-- ETAPA 4: Sugestão de sequência pela IA (R5) -->
+      <section
+        class="etapa etapa--sugestao"
+        data-etapa="sugestao"
+        hidden
+        aria-labelledby="titulo-etapa-sugestao"
+      >
+        <h2 id="titulo-etapa-sugestao">4. Match order suggestion</h2>
+        <p class="etapa__descricao">
+          Ask for a match order based on the games and the number of players.
+          If the AI is unavailable, a local sequence is used.
+        </p>
+
+        <button type="button" id="btn-sugerir-sequencia">
+          Suggest a sequence
+        </button>
+
+        <!-- Indicador de carregamento controlado por ui.mostrarCarregando. -->
+        <div
+          id="indicador-carregando"
+          class="indicador-carregando"
+          role="status"
+          aria-live="polite"
+          hidden
+        >
+          Generating sequence suggestion...
+        </div>
+
+        <!-- Lista ordenada numerada a partir de 1 (R5.3). -->
+        <h3>Suggested sequence</h3>
+        <ol id="lista-sequencia" class="lista-sequencia" start="1">
+          <!-- Preenchida dinamicamente com as partidas na ordem sugerida. -->
+        </ol>
+      </section>
+
+      <!-- ETAPA 5: Registro de pontos durante a sessão (R6) -->
+      <section
+        class="etapa etapa--registro"
+        data-etapa="registro"
+        hidden
+        aria-labelledby="titulo-etapa-registro"
+      >
+        <h2 id="titulo-etapa-registro">5. Score tracking</h2>
+        <p class="etapa__descricao">
+          When a match ends, pick the game and the winning player to add up the
+          points.
+        </p>
+
+        <!-- Controles para registrar partida: jogo + jogador vencedor -->
+        <form id="form-registro" class="form-registro">
+          <div class="campo">
+            <label for="select-jogo-registro">Match game</label>
+            <select id="select-jogo-registro" name="jogo">
+              <!-- Opções preenchidas com os Jogos_Selecionados. -->
+            </select>
+          </div>
+
+          <div class="campo">
+            <label for="select-jogador-registro">Winning player</label>
+            <select id="select-jogador-registro" name="jogador">
+              <!-- Opções preenchidas com os jogadores cadastrados. -->
+            </select>
+          </div>
+
+          <div class="form-registro__acoes">
+            <button type="submit" id="btn-registrar-partida">
+              Record match
+            </button>
+            <button type="button" id="btn-desfazer-registro">
+              Undo last
+            </button>
+          </div>
+        </form>
+
+        <!-- Placar/classificação parcial dos jogadores -->
+        <h3>Scoreboard</h3>
+        <ol id="placar-classificacao" class="placar" start="1">
+          <!-- Preenchido dinamicamente: nome e total, do maior para o menor. -->
+        </ol>
+      </section>
+
+      <!-- ETAPA 6: Apuração do vencedor e certificado (R7, R8) -->
+      <section
+        class="etapa etapa--apuracao"
+        data-etapa="apuracao"
+        hidden
+        aria-labelledby="titulo-etapa-apuracao"
+      >
+        <h2 id="titulo-etapa-apuracao">6. Winner of the day</h2>
+        <p class="etapa__descricao">
+          End the session to find out who scored the most points and generate
+          the certificate.
+        </p>
+
+        <button type="button" id="btn-apurar-vencedor">
+          End session and determine the winner
+        </button>
+
+        <!-- Exibição do vencedor + classificação final -->
+        <div id="resultado-apuracao" class="resultado-apuracao">
+          <!-- Preenchido dinamicamente: vencedor(es), empate e classificação. -->
+        </div>
+
+        <!--
+          Área do certificado (#certificado), renderizada por
+          certificate.renderizarCertificado, com botão de imprimir (R8.1, R8.5).
+        -->
+        <button type="button" id="btn-gerar-certificado">
+          Generate certificate
+        </button>
+        <section
+          id="certificado"
+          class="certificado"
+          aria-label="Winner of the day certificate"
+        >
+          <!-- Preenchido dinamicamente com o certificado e o botão de imprimir. -->
+        </section>
+      </section>
+    </main>
+
+    <!-- Navegação entre as etapas (R10.2). -->
+    <nav class="navegacao" aria-label="Step navigation">
+      <button type="button" id="btn-voltar">Back</button>
+      <button type="button" id="btn-avancar">Next</button>
+    </nav>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

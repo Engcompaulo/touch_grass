@@ -1,0 +1,711 @@
+/* ==========================================================================
+   style.css — Placar da Noite de Jogos (Board Game Scoreboard)
+   Tema "Touch Grass": paleta natural (verdes, terra, céu) e interação mínima.
+
+   Estrutura atendida (R1.1, R5.3, R10.2, R8.5):
+   - Layout por etapa: uma etapa visível por vez. Seções [data-etapa] são
+     ocultadas por [hidden]; apenas a etapa atual (#app[data-etapa-atual])
+     fica visível.
+   - Estados marcado/não marcado dos jogos do catálogo (visualmente distintos).
+   - Lista numerada (ol) da sequência sugerida, legível e começando em 1.
+   - Certificado (.certificado e .certificado__*) com @media print para
+     impressão limpa.
+   - Notificações (notificacao--erro/aviso/ok) e indicador de carregamento.
+   - Layout responsivo e legível.
+
+   Todos os comentários estão em português do Brasil.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Variáveis de tema (design tokens) — paleta "Touch Grass"
+   -------------------------------------------------------------------------- */
+:root {
+  /* Verdes de grama/folhagem */
+  --cor-grama: #3f7d20;
+  --cor-grama-escura: #2c5e16;
+  --cor-grama-clara: #76b74a;
+
+  /* Tons de terra/madeira (mesa de jogos) */
+  --cor-terra: #8a5a28;
+  --cor-madeira: #c89b6a;
+
+  /* Céu / destaques frescos */
+  --cor-ceu: #4a90d9;
+
+  /* Neutros e superfícies */
+  --cor-fundo: #f3f7ec; /* verde bem claro, lembra campo ao sol */
+  --cor-superficie: #ffffff;
+  --cor-superficie-alt: #eef4e3;
+  --cor-borda: #cfe0b8;
+  --cor-texto: #22311a;
+  --cor-texto-suave: #5c6b52;
+
+  /* Estados / notificações */
+  --cor-erro: #c0392b;
+  --cor-erro-fundo: #fcebe9;
+  --cor-aviso: #b8860b;
+  --cor-aviso-fundo: #fcf6e3;
+  --cor-ok: #2c7a3f;
+  --cor-ok-fundo: #e8f5ec;
+
+  /* Métricas */
+  --raio: 12px;
+  --raio-pequeno: 8px;
+  --sombra: 0 2px 8px rgba(34, 49, 26, 0.12);
+  --sombra-forte: 0 6px 20px rgba(34, 49, 26, 0.18);
+  --espaco: 1rem;
+  --largura-maxima: 820px;
+
+  --fonte-base: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   2. Reset leve e base tipográfica
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--fonte-base);
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--cor-texto);
+  background-color: var(--cor-fundo);
+  /* Leve textura de "campo" com um gradiente suave. */
+  background-image: linear-gradient(
+    180deg,
+    #eaf3dd 0%,
+    var(--cor-fundo) 40%
+  );
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  color: var(--cor-grama-escura);
+  margin: 0 0 0.5em;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+}
+
+h2 {
+  font-size: clamp(1.3rem, 2.6vw, 1.8rem);
+}
+
+p {
+  margin: 0 0 0.75em;
+}
+
+a {
+  color: var(--cor-ceu);
+}
+
+/* --------------------------------------------------------------------------
+   3. Contêiner raiz da aplicação (#app) e layout por etapa (R10.2)
+   -------------------------------------------------------------------------- */
+#app {
+  width: 100%;
+  max-width: var(--largura-maxima);
+  margin: 0 auto;
+  padding: clamp(1rem, 4vw, 2.5rem) clamp(0.75rem, 3vw, 1.75rem) 4rem;
+}
+
+/* Uma etapa visível por vez: tudo que estiver com [hidden] fica escondido.
+   O JS (flow.renderizarEtapa) marca com `hidden` todas as seções exceto a
+   etapa atual. Esta regra garante que o atributo tenha efeito mesmo com
+   outras declarações de display. */
+[hidden] {
+  display: none !important;
+}
+
+/* Cada etapa é uma "cartela" sobre a mesa. */
+section[data-etapa] {
+  background-color: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  padding: clamp(1rem, 3vw, 1.75rem);
+  margin-bottom: var(--espaco);
+}
+
+/* Cabeçalho/título de cada etapa recebe um filete de grama. */
+section[data-etapa] > h2:first-child {
+  border-bottom: 3px solid var(--cor-grama-clara);
+  padding-bottom: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   4. Controles de formulário e botões (interação mínima, alvos amplos)
+   -------------------------------------------------------------------------- */
+label {
+  display: inline-block;
+  font-weight: 600;
+  color: var(--cor-texto);
+  margin-bottom: 0.3rem;
+}
+
+input[type="text"],
+input[type="number"],
+input:not([type]),
+select {
+  font: inherit;
+  color: var(--cor-texto);
+  background-color: var(--cor-superficie);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio-pequeno);
+  padding: 0.6rem 0.75rem;
+  min-height: 2.75rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+input[type="number"] {
+  max-width: 10rem;
+}
+
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 3px solid var(--cor-ceu);
+  outline-offset: 2px;
+}
+
+/* Botões — alvos grandes e fáceis de tocar na mesa. */
+button {
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  background-color: var(--cor-grama);
+  border: none;
+  border-radius: var(--raio-pequeno);
+  padding: 0.65rem 1.25rem;
+  min-height: 2.75rem;
+  box-shadow: var(--sombra);
+  transition: background-color 0.15s ease, transform 0.05s ease;
+}
+
+button:hover {
+  background-color: var(--cor-grama-escura);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button:disabled {
+  background-color: #a9b89b;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Variante secundária (voltar / ações menos importantes). */
+button.secundario,
+button[data-variante="secundario"] {
+  color: var(--cor-grama-escura);
+  background-color: var(--cor-superficie-alt);
+  border: 2px solid var(--cor-borda);
+}
+
+button.secundario:hover,
+button[data-variante="secundario"]:hover {
+  background-color: var(--cor-borda);
+}
+
+/* Variante de perigo (remover / desfazer destrutivo). */
+button.perigo,
+button[data-variante="perigo"] {
+  background-color: var(--cor-erro);
+}
+
+button.perigo:hover,
+button[data-variante="perigo"]:hover {
+  background-color: #96271b;
+}
+
+/* Barra de navegação entre etapas (avançar/voltar). */
+.navegacao-etapas,
+.controles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1.25rem;
+}
+
+/* --------------------------------------------------------------------------
+   5. Catálogo de jogos — estados marcado / não marcado (R1.1)
+   -------------------------------------------------------------------------- */
+.catalogo,
+.lista-jogos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Cada item do catálogo. A seleção pode ser indicada por .selecionado,
+   [data-selecionado="true"] ou por um checkbox :checked interno — cobrimos
+   as três convenções para estilizar de forma robusta. */
+.jogo,
+.catalogo__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: var(--cor-superficie-alt);
+  border: 2px solid var(--cor-borda);
+  border-radius: var(--raio-pequeno);
+  padding: 0.75rem 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.jogo:hover,
+.catalogo__item:hover {
+  border-color: var(--cor-grama-clara);
+}
+
+/* Estado NÃO MARCADO: aparência apagada, sem destaque. */
+.jogo:not(.selecionado),
+.catalogo__item:not(.selecionado) {
+  opacity: 0.92;
+}
+
+/* Estado MARCADO: destaque forte em verde-grama + selo de confirmação. */
+.jogo.selecionado,
+.jogo[data-selecionado="true"],
+.catalogo__item.selecionado,
+.catalogo__item[data-selecionado="true"],
+.jogo:has(input:checked),
+.catalogo__item:has(input:checked) {
+  background-color: #e7f4d6;
+  border-color: var(--cor-grama);
+  box-shadow: inset 0 0 0 2px rgba(63, 125, 32, 0.35);
+  font-weight: 600;
+}
+
+/* Selo "marcado" (✓) exibido no canto quando selecionado. */
+.jogo.selecionado::after,
+.jogo[data-selecionado="true"]::after,
+.catalogo__item.selecionado::after,
+.catalogo__item[data-selecionado="true"]::after,
+.jogo:has(input:checked)::after,
+.catalogo__item:has(input:checked)::after {
+  content: "✓";
+  position: absolute;
+  top: 0.35rem;
+  right: 0.5rem;
+  width: 1.4rem;
+  height: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  background-color: var(--cor-grama);
+  border-radius: 50%;
+}
+
+/* Jogo personalizado ganha um pequeno marcador de origem. */
+.jogo--personalizado .jogo__nome::before,
+.jogo[data-personalizado="true"] .jogo__nome::before {
+  content: "★ ";
+  color: var(--cor-terra);
+}
+
+/* Botão de remover jogo personalizado dentro do item. */
+.jogo__remover {
+  margin-left: auto;
+  padding: 0.25rem 0.6rem;
+  min-height: 2rem;
+  font-size: 0.85rem;
+  background-color: transparent;
+  color: var(--cor-erro);
+  box-shadow: none;
+  border: 1px solid transparent;
+}
+
+.jogo__remover:hover {
+  background-color: var(--cor-erro-fundo);
+  border-color: var(--cor-erro);
+}
+
+/* Área de inclusão de jogo personalizado. */
+.jogo-personalizado,
+.form-jogo-personalizado {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-end;
+  margin-top: 1.25rem;
+}
+
+.jogo-personalizado input {
+  flex: 1 1 12rem;
+}
+
+/* --------------------------------------------------------------------------
+   6. Jogadores — lista de cadastro
+   -------------------------------------------------------------------------- */
+.jogadores,
+.lista-jogadores {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.jogador {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background-color: var(--cor-superficie-alt);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-pequeno);
+  padding: 0.55rem 0.9rem;
+}
+
+.jogador__nome {
+  font-weight: 600;
+}
+
+.jogador__remover {
+  margin-left: auto;
+}
+
+/* --------------------------------------------------------------------------
+   7. Pontuação por jogo
+   -------------------------------------------------------------------------- */
+.pontuacao-jogo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px dashed var(--cor-borda);
+}
+
+.pontuacao-jogo:last-child {
+  border-bottom: none;
+}
+
+.pontuacao-jogo__nome {
+  flex: 1 1 auto;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   8. Sugestão de sequência — lista numerada legível a partir de 1 (R5.3)
+   -------------------------------------------------------------------------- */
+.sequencia-sugerida,
+ol.sequencia {
+  /* Numeração nativa do <ol> começa em 1 e é controlada pelo contador. */
+  counter-reset: item;
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sequencia-sugerida > li,
+ol.sequencia > li {
+  counter-increment: item;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: var(--cor-superficie-alt);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-pequeno);
+  padding: 0.6rem 0.9rem;
+  font-size: 1.05rem;
+}
+
+/* Número da rodada em "pastilha" verde, iniciando em 1. */
+.sequencia-sugerida > li::before,
+ol.sequencia > li::before {
+  content: counter(item);
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  background-color: var(--cor-grama);
+  border-radius: 50%;
+}
+
+/* Indicador da origem da sugestão (IA x local). */
+.origem-sugestao {
+  font-size: 0.9rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 0.5rem;
+}
+
+.origem-sugestao[data-origem="local"]::before {
+  content: "⤷ ";
+}
+
+/* --------------------------------------------------------------------------
+   9. Registro de pontos e classificação
+   -------------------------------------------------------------------------- */
+.classificacao {
+  list-style: none;
+  margin: 1rem 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.classificacao__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.9rem;
+  background-color: var(--cor-superficie-alt);
+  border-radius: var(--raio-pequeno);
+}
+
+.classificacao__total {
+  font-weight: 700;
+  color: var(--cor-grama-escura);
+}
+
+/* --------------------------------------------------------------------------
+   10. Notificações (R10.4) e indicador de carregamento (R5.2)
+   -------------------------------------------------------------------------- */
+.area-notificacoes {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin: 0 auto 1rem;
+  max-width: var(--largura-maxima);
+}
+
+.notificacao {
+  border-radius: var(--raio-pequeno);
+  padding: 0.75rem 1rem;
+  border-left: 5px solid transparent;
+  box-shadow: var(--sombra);
+  font-weight: 500;
+}
+
+.notificacao--erro {
+  color: var(--cor-erro);
+  background-color: var(--cor-erro-fundo);
+  border-left-color: var(--cor-erro);
+}
+
+.notificacao--aviso {
+  color: var(--cor-aviso);
+  background-color: var(--cor-aviso-fundo);
+  border-left-color: var(--cor-aviso);
+}
+
+.notificacao--ok {
+  color: var(--cor-ok);
+  background-color: var(--cor-ok-fundo);
+  border-left-color: var(--cor-ok);
+}
+
+/* Indicador de carregamento da sugestão por IA. */
+.indicador-carregando {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem;
+  color: var(--cor-grama-escura);
+  background-color: var(--cor-superficie-alt);
+  border: 1px dashed var(--cor-grama-clara);
+  border-radius: var(--raio-pequeno);
+  font-weight: 600;
+}
+
+/* Pequeno "spinner" acessível à esquerda do texto. */
+.indicador-carregando::before {
+  content: "";
+  width: 1.2rem;
+  height: 1.2rem;
+  border: 3px solid var(--cor-grama-clara);
+  border-top-color: var(--cor-grama);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Respeita a preferência por redução de movimento. */
+@media (prefers-reduced-motion: reduce) {
+  .indicador-carregando::before {
+    animation: none;
+  }
+  button:active {
+    transform: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   11. Certificado do Vencedor do Dia (R8)
+   -------------------------------------------------------------------------- */
+.certificado {
+  margin-top: 1.5rem;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  text-align: center;
+  color: var(--cor-grama-escura);
+  background-color: #fffdf4;
+  /* Moldura dupla estilo "diploma". */
+  border: 3px solid var(--cor-grama);
+  outline: 6px solid #fffdf4;
+  box-shadow: var(--sombra-forte);
+  border-radius: var(--raio);
+}
+
+.certificado__titulo {
+  font-size: clamp(1.5rem, 4vw, 2.2rem);
+  letter-spacing: 0.03em;
+  margin-bottom: 0.75rem;
+}
+
+.certificado__destaque {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--cor-texto-suave);
+  margin-bottom: 1rem;
+}
+
+.certificado__vencedores {
+  list-style: none;
+  margin: 0 auto 1.5rem;
+  padding: 0;
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.certificado__vencedor {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+}
+
+.certificado__nome {
+  font-weight: 700;
+  color: var(--cor-grama);
+}
+
+.certificado__total {
+  font-weight: 600;
+  color: var(--cor-terra);
+}
+
+.certificado__imprimir {
+  margin-top: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   12. Layout responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  body {
+    font-size: 1rem;
+  }
+
+  .catalogo,
+  .lista-jogos {
+    grid-template-columns: 1fr;
+  }
+
+  .navegacao-etapas,
+  .controles {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .navegacao-etapas button,
+  .controles button {
+    width: 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   13. Impressão — somente o certificado, de forma limpa (R8.5)
+   -------------------------------------------------------------------------- */
+@media print {
+  /* Fundo branco e sem sombras para economizar tinta e sair limpo. */
+  body {
+    background: #fff;
+    color: #000;
+  }
+
+  /* Oculta tudo que não é o certificado: etapas, notificações, indicador,
+     botões e demais controles não devem aparecer na impressão. */
+  section[data-etapa],
+  .area-notificacoes,
+  .indicador-carregando,
+  .navegacao-etapas,
+  .controles {
+    display: none !important;
+  }
+
+  /* O certificado ocupa a página inteira, sem molduras pesadas de tela. */
+  #app {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .certificado {
+    margin: 0;
+    padding: 2rem;
+    box-shadow: none;
+    outline: none;
+    border: 2px solid #000;
+    color: #000;
+    background: #fff;
+    page-break-inside: avoid;
+  }
+
+  .certificado__titulo,
+  .certificado__nome,
+  .certificado__total,
+  .certificado__destaque {
+    color: #000;
+  }
+
+  /* O próprio botão de imprimir não deve constar no papel. */
+  .certificado__imprimir {
+    display: none !important;
+  }
+}

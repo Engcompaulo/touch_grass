@@ -1,0 +1,16 @@
+{
+  "name": "board-game-scoreboard",
+  "version": "1.0.0",
+  "description": "Placar eletrônico para noites de jogos de mesa (Hacktoberfest 2026 - Touch Grass)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest --run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "fast-check": "^3.23.1",
+    "jsdom": "^25.0.1",
+    "vitest": "^2.1.8"
+  }
+}
